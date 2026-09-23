@@ -111,6 +111,7 @@ import HoloCard from '../components/HoloCard.astro';
 <script>
   import vendors from '../data/vendors.json';
   import { extract, analyze, WANTED } from '../lib/sysdiagnose.js';
+  import { drawCard } from '../lib/cardImage.js';
 
   const $ = (id) => document.getElementById(id);
   const input = $('file') as HTMLInputElement;
@@ -162,21 +163,49 @@ import HoloCard from '../components/HoloCard.astro';
     }
   }
 
-  function renderCard({ device, modelId, build, score, rows }: ReturnType<typeof analyze>) {
-    $('c-model')!.textContent = device ?? 'iPhone';
+  // The card image is rendered ahead of time: iOS Safari only allows navigator.share()
+  // synchronously inside the tap, so there's no time to draw it on click.
+  let cardFile: File | null = null;
+
+  async function renderCard({ device, modelId, build, score, rows }: ReturnType<typeof analyze>) {
+    const card = {
+      device: device ?? 'iPhone',
+      modelId,
+      build,
+      score,
+      stars: score == null ? '' : score >= 90 ? '★★★' : score >= 60 ? '★★' : '★',
+      rows: rows.map((r) => ({ k: r.short, v: r.vendor?.split('（')[0].split('／')[0] ?? '未知', rank: r.rank ?? '—' })),
+    };
+    $('c-model')!.textContent = card.device;
     $('c-id')!.textContent = modelId ?? '';
     $('c-score')!.textContent = score == null ? '—' : String(score);
     $('c-build')!.textContent = build ? `iOS Build ${build}` : '';
-    $('c-stars')!.textContent = score == null ? '' : score >= 90 ? '★★★' : score >= 60 ? '★★' : '★';
-    $('c-rows')!.replaceChildren(...rows.map((r) => {
+    $('c-stars')!.textContent = card.stars;
+    $('c-rows')!.replaceChildren(...card.rows.map((r) => {
       const li = document.createElement('li');
       const cell = (cls: string, text: string) => Object.assign(document.createElement('span'), { className: cls, textContent: text });
-      const rank = cell('r', r.rank ?? '—');
-      if (r.rank) rank.dataset.rank = r.rank;
-      li.append(cell('k', r.short), cell('v', r.vendor?.split('（')[0].split('／')[0] ?? '未知'), rank);
+      const rank = cell('r', r.rank);
+      if (r.rank !== '—') rank.dataset.rank = r.rank;
+      li.append(cell('k', r.k), cell('v', r.v), rank);
       return li;
     }));
+
+    cardFile = null;
+    const blob = await drawCard(card);
+    if (blob) cardFile = new File([blob], `${(modelId ?? 'iphone').replace(/\W+/g, '-')}-card.png`, { type: 'image/png' });
   }
+
+  $('c-share')!.addEventListener('click', () => {
+    if (!cardFile) return;
+    if (navigator.canShare?.({ files: [cardFile] })) {
+      navigator.share({ files: [cardFile] }).catch(() => {}); // user cancelled
+      return;
+    }
+    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(cardFile), download: cardFile.name });
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+
 
   function renderDetails(details: ReturnType<typeof analyze>['details']) {
     const el = (tag: string, props: Record<string, string> = {}) => Object.assign(document.createElement(tag), props);
@@ -197,7 +226,7 @@ import HoloCard from '../components/HoloCard.astro';
   }
 
   function render(result: ReturnType<typeof analyze>) {
-    renderCard(result);
+    renderCard(result).catch(console.error);
     renderDetails(result.details);
     const { device, rows } = result;
     $('device')!.textContent = device ? `分析結果・${device}` : '分析結果';
