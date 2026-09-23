@@ -27,6 +27,8 @@ import HoloCard from '../components/HoloCard.astro';
       <span class="pill" data-rank="低">低</span>
       排名來自社群測試與報導，僅供參考，不代表 Apple 官方說法。
     </p>
+    <h2>詳細資訊</h2>
+    <div id="details"></div>
     <HoloCard />
   </section>
 
@@ -90,6 +92,19 @@ import HoloCard from '../components/HoloCard.astro';
   .pill[data-rank="中"]::before { background: var(--mid); }
   .pill[data-rank="低"]::before { background: var(--low); }
   .pill:empty { display: none; }
+  #details { display: grid; gap: 20px; }
+  #details :global(h3) { font-size: 0.8125rem; font-weight: 600; color: var(--muted); margin: 0 0 6px 4px; }
+  #details :global(.group-note) { font-size: 0.75rem; color: var(--muted); margin: 6px 4px 0; }
+  #details :global(dl) { margin: 0; padding: 0 16px; }
+  #details :global(.item) {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
+    padding: 12px 0; border-bottom: 1px solid var(--line);
+  }
+  #details :global(.item:last-child) { border-bottom: 0; }
+  #details :global(dt) { color: var(--muted); font-size: 0.9375rem; flex: none; }
+  #details :global(dd) { margin: 0; text-align: right; font-size: 0.9375rem; font-weight: 500; min-width: 0; overflow-wrap: anywhere; }
+  #details :global(dd.mono) { font: 0.8125rem/1.5 ui-monospace, "SF Mono", Menlo, monospace; }
+  #details :global(dd small) { display: block; font: 0.75rem/1.4 -apple-system, system-ui, sans-serif; color: var(--muted); }
   .legend { margin-top: 20px; font-size: 0.8125rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 </style>
 
@@ -163,8 +178,27 @@ import HoloCard from '../components/HoloCard.astro';
     }));
   }
 
+  function renderDetails(details: ReturnType<typeof analyze>['details']) {
+    const el = (tag: string, props: Record<string, string> = {}) => Object.assign(document.createElement(tag), props);
+    $('details')!.replaceChildren(...details.map((g) => {
+      const box = el('section');
+      const dl = el('dl', { className: 'card' });
+      for (const i of g.items) {
+        const dd = el('dd', { className: i.mono ? 'mono' : '', textContent: i.v! });
+        if (i.sub) dd.append(el('small', { textContent: i.sub }));
+        const row = el('div', { className: 'item' });
+        row.append(el('dt', { textContent: i.k }), dd);
+        dl.append(row);
+      }
+      box.append(el('h3', { textContent: g.title }), dl);
+      if (g.note) box.append(el('p', { className: 'group-note', textContent: g.note }));
+      return box;
+    }));
+  }
+
   function render(result: ReturnType<typeof analyze>) {
     renderCard(result);
+    renderDetails(result.details);
     const { device, rows } = result;
     $('device')!.textContent = device ? `分析結果・${device}` : '分析結果';
     const list = $('rows')!;

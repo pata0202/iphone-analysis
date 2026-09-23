@@ -93,5 +93,78 @@
         "rank": "中"
       }
     }
+  },
+  "ram": {
+    "label": "記憶體（RAM）",
+    "short": "記憶體",
+    "rankNote": "sysdiagnose 直接記錄了 DRAM 廠商名稱；找不到可信的 DRAM 廠排名資料，所以不列排名。",
+    "sources": [],
+    "names": {
+      "samsung": {
+        "vendor": "Samsung 三星",
+        "rank": null
+      },
+      "hynix": {
+        "vendor": "SK hynix 海力士",
+        "rank": null
+      },
+      "micron": {
+        "vendor": "Micron 美光",
+        "rank": null
+      },
+      "elpida": {
+        "vendor": "Elpida 爾必達",
+        "rank": null
+      }
+    }
+  },
+  "storage": {
+    "label": "儲存空間（NAND）",
+    "short": "儲存",
+    "rankNote": "sysdiagnose 的儲存控制器資訊直接記錄了 NAND 廠商名稱；找不到可信的 NAND 廠排名資料，所以不列排名。",
+    "sources": [
+      "https://www.notebookcheck.net/iPhone-17-Air-SanDisk-Kioxia-supposedly-added-to-list-of-internal-storage-suppliers.1108190.0.html"
+    ],
+    "names": {
+      "toshiba": {
+        "vendor": "Kioxia 鎧俠（原 Toshiba）",
+        "rank": null
+      },
+      "kioxia": {
+        "vendor": "Kioxia 鎧俠",
+        "rank": null
+      },
+      "hynix": {
+        "vendor": "SK hynix 海力士",
+        "rank": null
+      },
+      "samsung": {
+        "vendor": "Samsung 三星",
+        "rank": null
+      },
+      "sandisk": {
+        "vendor": "SanDisk",
+        "rank": null
+      },
+      "western digital": {
+        "vendor": "Western Digital 威騰",
+        "rank": null
+      },
+      "micron": {
+        "vendor": "Micron 美光",
+        "rank": null
+      }
+    }
+  },
+  "camera": {
+    "label": "相機模組",
+    "rankNote": "目前查不到相機模組序號前綴對應哪家模組廠（LG Innotek、Foxconn、Cowell 等），所以只列序號。知道的話歡迎到 GitHub 補充。",
+    "sources": [
+      "https://forums.macrumors.com/threads/iphone-13-pro-parts-serials-cameras-battery-display.2314093/"
+    ],
+    "prefixes": {}
+  },
+  "soc": {
+    "T8160": "Apple A20 Pro"
   }
 }

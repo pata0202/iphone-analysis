@@ -67,4 +67,16 @@ test('real iPhone 18 Pro ioreg dump', { skip: !existsSync(real) }, () => {
   assert.equal(modelId, 'iPhone19,2');
   assert.equal(build, '24A427');
   assert.equal(score, 100); // display, baseband, wifi all 高; battery unranked
+  assert.equal(r.ram.vendor, 'Samsung 三星');
+  assert.equal(r.ram.serial, 'LPDDR5 · 12 GB');
+  assert.equal(r.storage.vendor, 'Kioxia 鎧俠（原 Toshiba）');
+  assert.equal(r.storage.serial, 'TLC · 256 GB');
+  const d = Object.fromEntries(analyze(files, vendors).details.flatMap((g) => g.items.map((i) => [i.k, i.v])));
+  assert.equal(d['晶片'], 'Apple A20 Pro（T8160）');
+  assert.equal(d['最大容量'], '100%');
+  assert.equal(d['充電循環'], '1');
+  assert.equal(d['設計容量'], '4013 mAh');
+  assert.equal(d['主鏡頭'], 'DN8HVK07LSC0000Y2M');
+  assert.equal(d['LiDAR 光達'], 'GCFHUT022E7000174Q');
+  assert.equal(d['震動馬達'], 'LCSHV901AXA000185F');
 });
