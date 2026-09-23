@@ -63,4 +63,8 @@ test('real iPhone 18 Pro ioreg dump', { skip: !existsSync(real) }, () => {
   assert.equal(r.battery.serial, 'FQ1HVE001N70001HZS');
   assert.equal(r.baseband.vendor, 'Apple（C 系列）');
   assert.equal(r.wifi.vendor, 'Apple N1（Proxima）');
+  const { modelId, build, score } = analyze(files, vendors);
+  assert.equal(modelId, 'iPhone19,2');
+  assert.equal(build, '24A427');
+  assert.equal(score, 100); // display, baseband, wifi all 高; battery unranked
 });

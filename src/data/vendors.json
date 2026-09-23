@@ -1,6 +1,7 @@
 {
   "display": {
     "label": "螢幕面板",
+    "short": "螢幕",
     "rankNote": "依 MacRumors「螢幕樂透」討論串的社群共識：Samsung 最佳，LG GVC 次之，LG GH3 最差。",
     "sources": [
       "https://forums.macrumors.com/threads/this-years-screen-lottery-17-17-pro-17-pro-max-and-air.2466900/",
@@ -31,6 +32,7 @@
   },
   "battery": {
     "label": "電池",
+    "short": "電池",
     "rankNote": "找不到可信的電池廠排名資料，所以不列排名。",
     "sources": [
       "https://forums.macrumors.com/threads/iphone-15-pro-max-battery-manufacturer-capacity.2404310/page-3"
@@ -52,6 +54,7 @@
   },
   "baseband": {
     "label": "行動網路晶片（基頻）",
+    "short": "基頻",
     "rankNote": "Ookla 測試：Apple C1 與 Qualcomm 表現相近，弱訊號時更好，但峰值較低。Cellular Insights 測試：Intel 在弱訊號下明顯落後 Qualcomm。",
     "sources": [
       "https://www.macrumors.com/2025/09/08/ookla-iphone-16e-c1-modem-speed-test/",
@@ -74,6 +77,7 @@
   },
   "wifi": {
     "label": "Wi-Fi／藍牙晶片",
+    "short": "Wi-Fi",
     "rankNote": "Ookla 測試：iPhone 17 系列的 Apple N1 在下載、上傳速度上都優於前代 Broadcom 晶片。",
     "sources": [
       "https://www.techspot.com/news/110340-apple-ditched-broadcom-own-wi-fi-chip-n1.html",

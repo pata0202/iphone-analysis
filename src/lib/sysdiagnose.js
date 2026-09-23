@@ -118,8 +118,15 @@ export function analyze(files, vendors) {
   const wifi = Object.keys(vendors.wifi.drivers).find((d) => service.includes(d));
   rows.push({ key: 'wifi', serial: wifi && `driver ${wifi}`, ...(wifi && vendors.wifi.drivers[wifi]) });
 
+  // Overall score: average of ranked parts (高 100 / 中 60 / 低 30); unranked parts don't count.
+  const points = rows.map((r) => ({ 高: 100, 中: 60, 低: 30 })[r.rank]).filter(Boolean);
+  const score = points.length ? Math.round(points.reduce((a, b) => a + b) / points.length) : null;
+
   return {
     device,
-    rows: rows.map((r) => ({ ...r, label: vendors[r.key].label, note: vendors[r.key].rankNote })),
+    modelId: prop(tree, 'model'),
+    build: tree.match(/"OS Build Version" = "([^"]+)"/)?.[1] ?? null,
+    score,
+    rows: rows.map((r) => ({ ...r, label: vendors[r.key].label, short: vendors[r.key].short, note: vendors[r.key].rankNote })),
   };
 }

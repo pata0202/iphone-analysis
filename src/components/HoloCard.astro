@@ -1,0 +1,144 @@
+---
+// Pokémon-style holo card. Content is filled in by the page (ids below); this file owns the look and the tilt.
+---
+<div class="stage" id="holo-stage">
+  <div class="holo" id="holo">
+    <div class="face">
+      <div class="top">
+        <span class="kicker">零件鑑定卡</span>
+        <span class="hp"><small>總評</small><b id="c-score"></b></span>
+      </div>
+      <div class="art">
+        <div class="model" id="c-model"></div>
+        <div class="model-id" id="c-id"></div>
+        <div class="shine" aria-hidden="true"></div>
+      </div>
+      <ul class="moves" id="c-rows"></ul>
+      <div class="foot">
+        <span id="c-build"></span>
+        <span class="stars" id="c-stars"></span>
+      </div>
+    </div>
+    <div class="glare" aria-hidden="true"></div>
+  </div>
+  <p class="hint">用手指拖動卡片看看</p>
+</div>
+
+<style>
+  .stage { perspective: 900px; margin: 48px auto 0; width: min(100%, 320px); }
+  .holo {
+    --x: 0; --y: 0; --d: 0;
+    position: relative; aspect-ratio: 63 / 88; border-radius: 18px;
+    background: var(--fg); padding: 10px;
+    transform: rotateX(calc(var(--y) * -14deg)) rotateY(calc(var(--x) * 14deg));
+    transform-style: preserve-3d; will-change: transform;
+    box-shadow: 0 calc(12px + var(--d) * 8px) 32px rgba(0, 0, 0, 0.18);
+    touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab;
+  }
+  .holo:active { cursor: grabbing; }
+  .face {
+    height: 100%; border-radius: 10px; background: #fff; padding: 12px;
+    display: flex; flex-direction: column; gap: 10px; overflow: hidden;
+  }
+  .top { display: flex; justify-content: space-between; align-items: baseline; }
+  .kicker { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; color: var(--muted); }
+  .hp { display: flex; align-items: baseline; gap: 4px; }
+  .hp small { font-size: 0.6875rem; font-weight: 600; color: var(--muted); }
+  .hp b { font-size: 1.75rem; line-height: 1; letter-spacing: -0.03em; }
+
+  .art {
+    position: relative; flex: 1; border-radius: 8px; background: var(--fg); color: #fff;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 12px; overflow: hidden;
+  }
+  .model { font-size: 1.75rem; font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; position: relative; z-index: 1; }
+  .model-id { margin-top: 6px; font: 0.75rem ui-monospace, "SF Mono", Menlo, monospace; opacity: 0.6; position: relative; z-index: 1; }
+
+  /* The only gradients on the site: the foil only exists on the card. */
+  .shine {
+    position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen;
+    background:
+      repeating-linear-gradient(115deg, #ff7773 0%, #ffed5f 6%, #a8ff5f 12%, #83fff7 18%, #7894ff 24%, #d875ff 30%, #ff7773 36%);
+    background-size: 400% 400%;
+    background-position: calc(50% + var(--x) * 40%) calc(50% + var(--y) * 40%);
+    opacity: calc(0.22 + var(--d) * 0.55);
+  }
+  .glare {
+    position: absolute; inset: 0; border-radius: inherit; pointer-events: none; mix-blend-mode: overlay;
+    background: radial-gradient(circle at calc(50% + var(--x) * 50%) calc(50% + var(--y) * 50%), rgba(255, 255, 255, 0.7), transparent 55%);
+    opacity: calc(var(--d) * 0.9);
+  }
+
+  .moves { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .moves :global(li) {
+    display: grid; grid-template-columns: 3.2em 1fr auto; align-items: center; gap: 8px;
+    font-size: 0.8125rem; padding-bottom: 6px; border-bottom: 1px solid var(--card);
+  }
+  .moves :global(li:last-child) { border-bottom: 0; padding-bottom: 0; }
+  .moves :global(.k) { color: var(--muted); font-weight: 600; }
+  .moves :global(.v) { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .moves :global(.r) { font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+  .moves :global(.r::before) { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
+  .moves :global(.r[data-rank="高"]::before) { background: var(--high); }
+  .moves :global(.r[data-rank="中"]::before) { background: var(--mid); }
+  .moves :global(.r[data-rank="低"]::before) { background: var(--low); }
+
+  .foot { display: flex; justify-content: space-between; font-size: 0.6875rem; color: var(--muted); }
+  .stars { color: var(--fg); letter-spacing: 0.1em; }
+  .hint { text-align: center; font-size: 0.8125rem; color: var(--muted); margin-top: 16px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .holo { transform: none; }
+    .hint { display: none; }
+  }
+</style>
+
+<script>
+  // Tilt follows the finger through a spring (always animating toward the target), so it's
+  // interruptible and never jumps. Critically damped while tracking, a little bounce on release.
+  const stage = document.getElementById('holo-stage')!;
+  const holo = document.getElementById('holo')!;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let x = 0, y = 0, vx = 0, vy = 0, tx = 0, ty = 0, zeta = 1, raf = 0, last = 0;
+  const k = (2 * Math.PI / 0.35) ** 2; // response 0.35s
+
+  function step(t: number) {
+    const dt = Math.min((t - last) / 1000, 1 / 30);
+    last = t;
+    const c = 2 * zeta * Math.sqrt(k);
+    vx += (k * (tx - x) - c * vx) * dt; x += vx * dt;
+    vy += (k * (ty - y) - c * vy) * dt; y += vy * dt;
+    holo.style.setProperty('--x', x.toFixed(4));
+    holo.style.setProperty('--y', y.toFixed(4));
+    holo.style.setProperty('--d', Math.min(1, Math.hypot(x, y)).toFixed(4));
+    if (Math.abs(tx - x) + Math.abs(ty - y) + Math.abs(vx) + Math.abs(vy) < 1e-3) { raf = 0; return; }
+    raf = requestAnimationFrame(step);
+  }
+  function kick() {
+    if (raf) return;
+    last = performance.now();
+    raf = requestAnimationFrame(step);
+  }
+  const clamp = (v: number) => Math.max(-1, Math.min(1, v));
+  function aim(e: PointerEvent) {
+    // Measure the untransformed stage, not the tilted card, so the tilt doesn't feed back into itself.
+    const r = stage.getBoundingClientRect();
+    const h = holo.offsetHeight;
+    tx = clamp(((e.clientX - r.left) / r.width) * 2 - 1);
+    ty = clamp(((e.clientY - r.top) / h) * 2 - 1);
+    zeta = 1;
+    kick();
+  }
+  function release() {
+    tx = ty = 0;
+    zeta = 0.6;
+    kick();
+  }
+
+  if (!reduce) {
+    holo.addEventListener('pointerdown', (e) => { holo.setPointerCapture(e.pointerId); aim(e); });
+    holo.addEventListener('pointermove', aim);
+    for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) holo.addEventListener(ev, release);
+  }
+</script>

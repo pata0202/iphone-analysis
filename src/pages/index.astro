@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import HoloCard from '../components/HoloCard.astro';
 ---
 <Base title="iPhone 零件製造商查詢">
   <h1>你的 iPhone<br />零件是誰做的？</h1>
@@ -26,6 +27,7 @@ import Base from '../layouts/Base.astro';
       <span class="pill" data-rank="低">低</span>
       排名來自社群測試與報導，僅供參考，不代表 Apple 官方說法。
     </p>
+    <HoloCard />
   </section>
 
   <template id="row-tpl">
@@ -145,7 +147,25 @@ import Base from '../layouts/Base.astro';
     }
   }
 
-  function render({ device, rows }: ReturnType<typeof analyze>) {
+  function renderCard({ device, modelId, build, score, rows }: ReturnType<typeof analyze>) {
+    $('c-model')!.textContent = device ?? 'iPhone';
+    $('c-id')!.textContent = modelId ?? '';
+    $('c-score')!.textContent = score == null ? '—' : String(score);
+    $('c-build')!.textContent = build ? `iOS Build ${build}` : '';
+    $('c-stars')!.textContent = score == null ? '' : score >= 90 ? '★★★' : score >= 60 ? '★★' : '★';
+    $('c-rows')!.replaceChildren(...rows.map((r) => {
+      const li = document.createElement('li');
+      const cell = (cls: string, text: string) => Object.assign(document.createElement('span'), { className: cls, textContent: text });
+      const rank = cell('r', r.rank ?? '—');
+      if (r.rank) rank.dataset.rank = r.rank;
+      li.append(cell('k', r.short), cell('v', r.vendor?.split('（')[0].split('／')[0] ?? '未知'), rank);
+      return li;
+    }));
+  }
+
+  function render(result: ReturnType<typeof analyze>) {
+    renderCard(result);
+    const { device, rows } = result;
     $('device')!.textContent = device ? `分析結果・${device}` : '分析結果';
     const list = $('rows')!;
     const tpl = $('row-tpl') as HTMLTemplateElement;
