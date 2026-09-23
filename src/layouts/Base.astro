@@ -48,7 +48,7 @@ const path = Astro.url.pathname;
     font: 100%/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC", "Noto Sans TC", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 680px; margin: 0 auto; padding: 0 20px; }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 0 max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left)); }
   h1 { font-size: clamp(2rem, 8vw, 3rem); line-height: 1.08; letter-spacing: -0.02em; font-weight: 700; margin: 40px 0 12px; }
   h2 { font-size: 1.5rem; line-height: 1.2; letter-spacing: -0.01em; margin: 40px 0 12px; }
   p { margin: 0 0 12px; }
@@ -58,6 +58,7 @@ const path = Astro.url.pathname;
 
   nav {
     position: sticky; top: 0; z-index: 10;
+    padding-top: env(safe-area-inset-top);
     background: rgba(255, 255, 255, 0.72);
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
