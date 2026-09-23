@@ -17,11 +17,12 @@ const path = Astro.url.pathname;
         <div class="links">
           <a href="/" aria-current={path === '/' ? 'page' : undefined}>分析</a>
           <a href="/guide" aria-current={path.startsWith('/guide') ? 'page' : undefined}>取得教學</a>
+          <a href="/about" aria-current={path.startsWith('/about') ? 'page' : undefined}>關於</a>
         </div>
       </div>
     </nav>
     <main class="wrap"><slot /></main>
-    <footer class="wrap">檔案只在你的瀏覽器裡分析，不會上傳到任何伺服器。</footer>
+    <footer class="wrap">檔案只在你的瀏覽器裡分析，不會上傳到任何伺服器。<br /><a href="https://github.com/pata0202/iphone-analysis" target="_blank" rel="noopener">GitHub</a></footer>
   </body>
 </html>
 
