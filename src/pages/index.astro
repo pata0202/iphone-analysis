@@ -119,6 +119,9 @@ import HoloCard from '../components/HoloCard.astro';
   const status = $('status')!;
   const progress = $('progress') as HTMLProgressElement;
 
+  // GA4 events. Only models, vendors and scores are sent — never serial numbers.
+  const track = (name: string, params: Record<string, unknown> = {}) => (window as any).gtag?.('event', name, params);
+
   function say(msg: string, error = false) {
     status.hidden = false;
     status.textContent = msg;
@@ -128,6 +131,9 @@ import HoloCard from '../components/HoloCard.astro';
   async function run(files: File[]) {
     $('result')!.hidden = true;
     if (!files.length) return;
+    const t0 = performance.now();
+    const isTxt = files.some((f) => f.name.endsWith('.txt'));
+    track('analyze_start', { file_type: isTxt ? 'txt' : 'archive', file_size_mb: Math.round(files.reduce((n, f) => n + f.size, 0) / 1024 / 1024) });
     try {
       let texts: Record<string, string> = {};
       const txts = files.filter((f) => f.name.endsWith('.txt'));
@@ -152,13 +158,24 @@ import HoloCard from '../components/HoloCard.astro';
         }
       }
       if (!Object.keys(texts).length) {
+        track('analyze_error', { reason: 'no_ioreg' });
         say('找不到 ioreg 資料。請確認上傳的是 sysdiagnose_….tar.gz，或 ioreg 資料夾裡的 IODeviceTree.txt / IOService.txt。', true);
         return;
       }
-      render(analyze(texts, vendors));
+      const result = analyze(texts, vendors);
+      render(result);
+      track('analyze_success', {
+        device: result.device ?? 'unknown',
+        model_id: result.modelId ?? 'unknown',
+        ios_build: result.build ?? 'unknown',
+        score: result.score ?? -1,
+        duration_ms: Math.round(performance.now() - t0),
+        ...Object.fromEntries(result.rows.map((r) => [`${r.key}_vendor`, r.vendor ?? 'unknown'])),
+      });
       status.hidden = true;
     } catch (e) {
       console.error(e);
+      track('analyze_error', { reason: 'read_failed' });
       say('讀取失敗：檔案可能損毀或格式不符。', true);
     }
   }
@@ -198,10 +215,12 @@ import HoloCard from '../components/HoloCard.astro';
   $('c-share')!.addEventListener('click', () => {
     if (!cardFile) return;
     if (navigator.canShare?.({ files: [cardFile] })) {
+      track('share_card', { method: 'share' });
       navigator.share({ files: [cardFile] }).catch(() => {}); // user cancelled
       return;
     }
     const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(cardFile), download: cardFile.name });
+    track('share_card', { method: 'download' });
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   });
