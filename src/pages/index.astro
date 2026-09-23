@@ -1,0 +1,185 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="iPhone 零件製造商查詢">
+  <h1>你的 iPhone<br />零件是誰做的？</h1>
+  <p class="lead">找出螢幕、電池、行動網路<br/>與 Wi-Fi 晶片的製造商。</p>
+
+  <label class="drop card" id="drop">
+    <input type="file" id="file" accept=".gz,.tgz,.tar,.txt,application/gzip,application/x-tar,text/plain" multiple hidden />
+    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></svg>
+    <span class="drop-title">選擇 sysdiagnose 檔案</span>
+    <span class="drop-sub">sysdiagnose_….tar.gz，或解壓後 ioreg 資料夾裡的 .txt</span>
+    <span class="btn">選擇檔案</span>
+  </label>
+  <p class="hint">還沒有檔案？<a href="/guide">看如何取得 sysdiagnose →</a></p>
+
+  <p id="status" class="status" role="status" hidden></p>
+  <progress id="progress" max="1" value="0" hidden></progress>
+
+  <section id="result" hidden>
+    <h2 id="device"></h2>
+    <ul id="rows" class="rows"></ul>
+    <p class="legend">
+      <span class="pill" data-rank="高">高</span>
+      <span class="pill" data-rank="中">中</span>
+      <span class="pill" data-rank="低">低</span>
+      排名來自社群測試與報導，僅供參考，不代表 Apple 官方說法。
+    </p>
+  </section>
+
+  <template id="row-tpl">
+    <li class="row card">
+      <div class="row-head">
+        <span class="row-label"></span>
+        <span class="pill"></span>
+      </div>
+      <div class="row-vendor"></div>
+      <div class="row-serial"></div>
+      <details>
+        <summary>排名依據</summary>
+        <p class="row-note"></p>
+        <ul class="row-sources"></ul>
+      </details>
+    </li>
+  </template>
+</Base>
+
+<style>
+  .drop {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    text-align: center; padding: 40px 20px; margin-top: 28px; cursor: pointer;
+    border: 2px dashed transparent; transition: border-color 150ms, background-color 150ms;
+  }
+  .drop.over { border-color: var(--accent); background: #eef5ff; }
+  .drop svg { color: var(--muted); }
+  .drop-title { font-size: 1.25rem; font-weight: 600; }
+  .drop-sub { color: var(--muted); font-size: 0.875rem; margin-bottom: 12px; }
+  .hint { margin-top: 16px; text-align: center; font-size: 0.9375rem; }
+  .status { margin-top: 24px; text-align: center; color: var(--muted); }
+  .status.error { color: var(--low); }
+  progress {
+    display: block; width: 100%; max-width: 320px; height: 4px; margin: 12px auto 0;
+    appearance: none; -webkit-appearance: none; border: 0; border-radius: 2px; background: var(--card); overflow: hidden;
+  }
+  progress[hidden] { display: none; }
+  progress::-webkit-progress-bar { background: var(--card); }
+  progress::-webkit-progress-value { background: var(--fg); transition: width 150ms linear; }
+  progress::-moz-progress-bar { background: var(--fg); }
+
+  .rows { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+  .row-head { display: flex; justify-content: space-between; align-items: center; }
+  .row-label { color: var(--muted); font-size: 0.875rem; font-weight: 600; }
+  .row-vendor { font-size: 1.375rem; font-weight: 600; letter-spacing: -0.01em; margin: 4px 0; }
+  .row-vendor.unknown { color: var(--muted); font-size: 1.0625rem; font-weight: 500; }
+  .row-serial { font: 0.8125rem/1.4 ui-monospace, "SF Mono", Menlo, monospace; color: var(--muted); word-break: break-all; }
+  details { margin-top: 12px; font-size: 0.875rem; color: var(--muted); }
+  summary { cursor: pointer; color: var(--accent); }
+  details p { margin: 8px 0; }
+  .row-sources { padding-left: 18px; margin: 0; word-break: break-all; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.8125rem; font-weight: 600; padding: 3px 10px; border-radius: 999px;
+    background: #fff; border: 1px solid var(--line);
+  }
+  .pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+  .pill[data-rank="高"]::before { background: var(--high); }
+  .pill[data-rank="中"]::before { background: var(--mid); }
+  .pill[data-rank="低"]::before { background: var(--low); }
+  .pill:empty { display: none; }
+  .legend { margin-top: 20px; font-size: 0.8125rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+</style>
+
+<script>
+  import vendors from '../data/vendors.json';
+  import { extract, analyze, WANTED } from '../lib/sysdiagnose.js';
+
+  const $ = (id) => document.getElementById(id);
+  const input = $('file') as HTMLInputElement;
+  const drop = $('drop')!;
+  const status = $('status')!;
+  const progress = $('progress') as HTMLProgressElement;
+
+  function say(msg: string, error = false) {
+    status.hidden = false;
+    status.textContent = msg;
+    status.classList.toggle('error', error);
+  }
+
+  async function run(files: File[]) {
+    $('result')!.hidden = true;
+    if (!files.length) return;
+    try {
+      let texts: Record<string, string> = {};
+      const txts = files.filter((f) => f.name.endsWith('.txt'));
+      if (txts.length) {
+        for (const f of txts) if (WANTED.includes(f.name)) texts[f.name] = await f.text();
+      } else {
+        const size = (files[0].size / 1024 / 1024).toFixed(0);
+        let shown = -1;
+        progress.hidden = false;
+        progress.value = 0;
+        say(`分析中…（${size} MB）請勿關閉頁面`);
+        try {
+          texts = await extract(files[0], undefined, (p) => {
+            const pct = Math.floor(p * 100);
+            if (pct === shown) return;
+            shown = pct;
+            progress.value = p;
+            say(`分析中… ${pct}%（${size} MB）請勿關閉頁面`);
+          });
+        } finally {
+          progress.hidden = true;
+        }
+      }
+      if (!Object.keys(texts).length) {
+        say('找不到 ioreg 資料。請確認上傳的是 sysdiagnose_….tar.gz，或 ioreg 資料夾裡的 IODeviceTree.txt / IOService.txt。', true);
+        return;
+      }
+      render(analyze(texts, vendors));
+      status.hidden = true;
+    } catch (e) {
+      console.error(e);
+      say('讀取失敗：檔案可能損毀或格式不符。', true);
+    }
+  }
+
+  function render({ device, rows }: ReturnType<typeof analyze>) {
+    $('device')!.textContent = device ? `分析結果・${device}` : '分析結果';
+    const list = $('rows')!;
+    const tpl = $('row-tpl') as HTMLTemplateElement;
+    list.replaceChildren();
+    for (const r of rows) {
+      const li = tpl.content.firstElementChild!.cloneNode(true) as HTMLElement;
+      const q = (s: string) => li.querySelector(s) as HTMLElement;
+      q('.row-label').textContent = r.label;
+      const pill = q('.pill');
+      if (r.rank) { pill.textContent = r.rank; pill.dataset.rank = r.rank; }
+      const v = q('.row-vendor');
+      v.textContent = r.vendor ?? (r.serial ? '未收錄的製造商代碼' : 'sysdiagnose 中找不到這項資料');
+      v.classList.toggle('unknown', !r.vendor);
+      q('.row-serial').textContent = r.serial ?? '';
+      q('.row-note').textContent = r.note;
+      const src = vendors[r.key as keyof typeof vendors].sources;
+      q('.row-sources').replaceChildren(...src.map((u) => {
+        const a = Object.assign(document.createElement('a'), { href: u, textContent: u, target: '_blank', rel: 'noopener' });
+        const item = document.createElement('li');
+        item.append(a);
+        return item;
+      }));
+      list.append(li);
+    }
+    $('result')!.hidden = false;
+    $('result')!.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  input.addEventListener('change', () => run([...(input.files ?? [])]));
+  drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('over'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+  drop.addEventListener('drop', (e) => {
+    e.preventDefault();
+    drop.classList.remove('over');
+    run([...(e.dataTransfer?.files ?? [])]);
+  });
+</script>

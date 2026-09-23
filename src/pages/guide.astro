@@ -1,0 +1,135 @@
+---
+import { existsSync } from 'node:fs';
+import Base from '../layouts/Base.astro';
+
+// Screenshots: drop images into public/guide/ with these names and they show up automatically.
+const steps = [
+  {
+    title: '同時按下三個按鈕',
+    body: '同時按住「音量＋」、「音量－」與「側邊按鈕」約 1 到 1.5 秒後放開。成功時會感覺到一下短震動，螢幕可能閃一下（也會順便截一張圖，之後可以刪掉）。',
+    warn: '不要按超過 2 秒，否則會跳出關機或「SOS 緊急服務」畫面。如果不小心跳出來，點「取消」或往下滑關掉就好。',
+    diagram: true,
+  },
+  {
+    title: '等待 5 到 10 分鐘',
+    body: 'iPhone 會在背景產生紀錄檔，這段時間可以正常使用手機，不需要做任何事。',
+  },
+  {
+    title: '打開「檢視分析記錄」',
+    body: '前往「設定」→「隱私權與安全性」→ 滑到最下面點「分析與改進功能」，再滑到最下面點「檢視分析記錄」（舊版 iOS 叫「分析資料」）。',
+    shot: 'step3.jpg',
+    alt: '分析與改進功能頁面最下方的檢視分析記錄',
+  },
+  {
+    title: '找到 sysdiagnose 檔案',
+    body: '清單很長，直接在最下方的搜尋欄輸入「sys」，找「此裝置」底下以「sysdiagnose_」開頭、後面接著今天日期的檔案（例如 sysdiagnose_2026.09.23_…tar.gz）。如果還沒出現，就再等幾分鐘後重新進入這個頁面。',
+    shot: 'step4.jpg',
+    alt: '用搜尋找到的 sysdiagnose 檔案',
+  },
+  {
+    title: '儲存到「檔案」',
+    body: '點開該檔案，按分享按鈕叫出分享選單，選擇「儲存到檔案」，再選一個你找得到的位置（例如「我的 iPhone」）後按「儲存」。檔案大約 300 MB 左右，屬於正常大小。',
+    shot: 'step5.jpg',
+    alt: '分享選單中的儲存到檔案選項',
+  },
+  {
+    title: '回到這裡上傳',
+    body: '用 Safari 打開本網站，點「選擇檔案」→「選擇檔案」或「瀏覽」，選剛剛儲存的 sysdiagnose 檔案。',
+    shot: 'step6.jpg',
+    alt: 'Safari 中選擇檔案的畫面',
+  },
+].map((s) => ({ ...s, hasShot: s.shot && existsSync(`public/guide/${s.shot}`) }));
+---
+<Base title="如何取得 sysdiagnose">
+  <h1>如何取得 sysdiagnose</h1>
+  <p class="lead">sysdiagnose 是 iPhone 內建的系統診斷紀錄，裡面記錄了各零件的序號。整個流程都在手機上完成，不需要電腦。</p>
+
+  <ol class="steps">
+    {steps.map((s, i) => (
+      <li class="step">
+        <div class="num">{i + 1}</div>
+        <div class="step-body">
+          <h2>{s.title}</h2>
+          <p>{s.body}</p>
+          {s.warn && <p class="warn">{s.warn}</p>}
+          {s.diagram && (
+            <svg class="diagram" viewBox="0 0 360 290" role="img" aria-label="iPhone 按鈕位置：左側音量加、音量減，右側側邊按鈕，三顆同時按">
+              <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0 0L10 5L0 10z" class="ink-fill" />
+                </marker>
+              </defs>
+              <rect x="130" y="20" width="100" height="210" rx="22" class="body" />
+              <rect x="136" y="26" width="88" height="198" rx="17" class="screen" />
+              <rect x="163" y="33" width="34" height="10" rx="5" class="ink-fill" />
+              <rect x="126" y="56" width="4" height="14" rx="2" class="muted-fill" />
+              <rect x="125" y="82" width="5" height="26" rx="2" class="ink-fill" />
+              <rect x="125" y="116" width="5" height="26" rx="2" class="ink-fill" />
+              <rect x="230" y="90" width="5" height="40" rx="2" class="ink-fill" />
+              <line x1="60" y1="95" x2="119" y2="95" class="lead" marker-end="url(#arrow)" />
+              <line x1="60" y1="129" x2="119" y2="129" class="lead" marker-end="url(#arrow)" />
+              <line x1="300" y1="110" x2="241" y2="110" class="lead" marker-end="url(#arrow)" />
+              <text x="56" y="100" text-anchor="end" class="label">音量＋</text>
+              <text x="56" y="134" text-anchor="end" class="label">音量－</text>
+              <text x="304" y="115" class="label">側邊</text>
+              <text x="304" y="133" class="label">按鈕</text>
+              <text x="118" y="67" text-anchor="end" class="note">不用按</text>
+              <text x="180" y="264" text-anchor="middle" class="label">三顆一起按 1～1.5 秒</text>
+              <text x="180" y="284" text-anchor="middle" class="note">感覺到震動就放開</text>
+            </svg>
+          )}
+          {s.shot && (s.hasShot
+            ? <img src={`/guide/${s.shot}`} alt={s.alt} width="1206" height="2622" loading="lazy" class="shot" />
+            : <div class="shot placeholder">截圖待補<br /><code>public/guide/{s.shot}</code></div>)}
+        </div>
+      </li>
+    ))}
+  </ol>
+
+  <section class="card more">
+    <h2>用電腦也可以</h2>
+    <p>在第 5 步改用「AirDrop」傳到 Mac，再把檔案拖進本網站的上傳區即可。Mac 若自動解壓縮成資料夾，打開裡面的 <code>ioreg</code> 資料夾，同時選取 <code>IODeviceTree.txt</code> 與 <code>IOService.txt</code> 上傳也行。</p>
+  </section>
+
+  <section class="card more">
+    <h2>常見問題</h2>
+    <h3>檔案很大，安全嗎？</h3>
+    <p>sysdiagnose 通常有數百 MB，內含裝置與使用紀錄。本網站在你的瀏覽器裡直接解壓分析，檔案不會傳到任何伺服器。</p>
+    <h3>為什麼有些項目顯示「找不到」？</h3>
+    <p>Apple 會隨 iOS 版本調整 sysdiagnose 的內容，部分欄位在新版 iOS 可能被移除，或舊機型沒有這項資料。</p>
+  </section>
+
+  <p class="cta"><a href="/" class="btn">開始分析</a></p>
+</Base>
+
+<style>
+  .steps { list-style: none; padding: 0; margin: 32px 0 0; }
+  .step { display: flex; gap: 16px; padding: 24px 0; border-top: 1px solid var(--line); }
+  .num {
+    flex: none; width: 32px; height: 32px; border-radius: 50%;
+    background: var(--fg); color: #fff; font-weight: 600;
+    display: grid; place-items: center;
+  }
+  .step-body { min-width: 0; flex: 1; }
+  .step h2 { font-size: 1.25rem; margin: 2px 0 8px; }
+  .warn { background: #fff4e5; border-radius: 12px; padding: 12px 14px; font-size: 0.9375rem; }
+  .shot { display: block; width: 100%; height: auto; max-width: 320px; border-radius: 16px; margin-top: 12px; border: 1px solid var(--line); }
+  .placeholder {
+    aspect-ratio: 9 / 16; max-height: 360px; display: grid; place-content: center; text-align: center;
+    background: var(--card); color: var(--muted); font-size: 0.875rem; border-style: dashed;
+  }
+  .diagram { display: block; width: 100%; max-width: 360px; margin-top: 16px; font-family: inherit; }
+  .diagram .body { fill: #fff; stroke: var(--fg); stroke-width: 2; }
+  .diagram .screen { fill: var(--card); }
+  .diagram .ink-fill { fill: var(--fg); }
+  .diagram .muted-fill { fill: var(--line); }
+  .diagram .lead { stroke: var(--fg); stroke-width: 1.5; }
+  .diagram .label { fill: var(--fg); font-size: 15px; font-weight: 600; }
+  .diagram .note { fill: var(--muted); font-size: 12px; }
+  .more { margin-top: 24px; }
+  .more h2 { margin-top: 0; font-size: 1.25rem; }
+  .more h3 { font-size: 1rem; margin: 16px 0 4px; }
+  .more p { color: var(--muted); font-size: 0.9375rem; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.875em; word-break: break-all; }
+  .cta { text-align: center; margin-top: 40px; }
+</style>

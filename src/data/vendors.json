@@ -1,0 +1,93 @@
+{
+  "display": {
+    "label": "螢幕面板",
+    "rankNote": "依 MacRumors「螢幕樂透」討論串的社群共識：Samsung 最佳，LG GVC 次之，LG GH3 最差。",
+    "sources": [
+      "https://forums.macrumors.com/threads/this-years-screen-lottery-17-17-pro-17-pro-max-and-air.2466900/",
+      "https://github.com/gotnull/iphone-diagnostics"
+    ],
+    "prefixes": {
+      "G9N": {
+        "vendor": "Samsung Display",
+        "rank": "高"
+      },
+      "G9P": {
+        "vendor": "Samsung Display",
+        "rank": "高"
+      },
+      "G9Q": {
+        "vendor": "Samsung Display",
+        "rank": "高"
+      },
+      "GVC": {
+        "vendor": "LG Display",
+        "rank": "中"
+      },
+      "GH3": {
+        "vendor": "LG Display",
+        "rank": "低"
+      }
+    }
+  },
+  "battery": {
+    "label": "電池",
+    "rankNote": "找不到可信的電池廠排名資料，所以不列排名。",
+    "sources": [
+      "https://forums.macrumors.com/threads/iphone-15-pro-max-battery-manufacturer-capacity.2404310/page-3"
+    ],
+    "prefixes": {
+      "F5D": {
+        "vendor": "Desay 德賽",
+        "rank": null
+      },
+      "F8Y": {
+        "vendor": "Sunwoda 欣旺達",
+        "rank": null
+      },
+      "F9G": {
+        "vendor": "Huapu 華普／Simplo 新普（來源說法不一）",
+        "rank": null
+      }
+    }
+  },
+  "baseband": {
+    "label": "行動網路晶片（基頻）",
+    "rankNote": "Ookla 測試：Apple C1 與 Qualcomm 表現相近，弱訊號時更好，但峰值較低。Cellular Insights 測試：Intel 在弱訊號下明顯落後 Qualcomm。",
+    "sources": [
+      "https://www.macrumors.com/2025/09/08/ookla-iphone-16e-c1-modem-speed-test/",
+      "https://www.tomsguide.com/us/iphone-x-modem-tests,news-26205.html"
+    ],
+    "pciVendors": {
+      "17cb": {
+        "vendor": "Qualcomm 高通",
+        "rank": "高"
+      },
+      "106b": {
+        "vendor": "Apple（C 系列）",
+        "rank": "高"
+      },
+      "8086": {
+        "vendor": "Intel",
+        "rank": "低"
+      }
+    }
+  },
+  "wifi": {
+    "label": "Wi-Fi／藍牙晶片",
+    "rankNote": "Ookla 測試：iPhone 17 系列的 Apple N1 在下載、上傳速度上都優於前代 Broadcom 晶片。",
+    "sources": [
+      "https://www.techspot.com/news/110340-apple-ditched-broadcom-own-wi-fi-chip-n1.html",
+      "https://wifinowglobal.com/news-blog/apple-finally-ditches-broadcom-and-launches-new-n1-wi-fi-7-chip-to-power-iphone-17-but-how-well-will-it-work/"
+    ],
+    "drivers": {
+      "AppleCentauri": {
+        "vendor": "Apple N1（Proxima）",
+        "rank": "高"
+      },
+      "AppleBCMWLAN": {
+        "vendor": "Broadcom 博通",
+        "rank": "中"
+      }
+    }
+  }
+}
