@@ -2,10 +2,11 @@
   "display": {
     "label": "螢幕面板",
     "short": "螢幕",
-    "rankNote": "依 MacRumors「螢幕樂透」討論串的社群共識：Samsung 最佳，LG GVC 次之，LG GH3 最差。",
+    "rankNote": "依 MacRumors「螢幕樂透」討論串的社群共識：Samsung 最佳，LG GVC 次之，LG GH3 最差。G9C、GVH（LG）與 J5V（BOE）沒有社群共識，所以不列排名。",
     "sources": [
       "https://forums.macrumors.com/threads/this-years-screen-lottery-17-17-pro-17-pro-max-and-air.2466900/",
-      "https://github.com/gotnull/iphone-diagnostics"
+      "https://github.com/gotnull/iphone-diagnostics",
+      "https://github.com/ThatLastGamer/iPhone-sysdiagnose-parser"
     ],
     "prefixes": {
       "G9N": {
@@ -27,6 +28,18 @@
       "GH3": {
         "vendor": "LG Display",
         "rank": "低"
+      },
+      "G9C": {
+        "vendor": "LG Display",
+        "rank": null
+      },
+      "GVH": {
+        "vendor": "LG Display",
+        "rank": null
+      },
+      "J5V": {
+        "vendor": "BOE 京東方",
+        "rank": null
       }
     }
   },
