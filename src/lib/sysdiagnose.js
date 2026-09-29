@@ -114,6 +114,13 @@ const CAMERAS = [
   ['FrontIRStructuredLightProjectorSerialNumString', 'Face ID 點陣投射器'],
   ['JasperSNUM', 'LiDAR 光達'],
 ];
+// [ioreg property, row key, card label, short label] for the cameras that get their own vendor card.
+const MAIN_CAMERAS = [
+  ['FrontCameraModuleSerialNumString', 'camera_front', '前置鏡頭', '前鏡頭'],
+  ['BackCameraModuleSerialNumString', 'camera_back', '後置主鏡頭', '主鏡頭'],
+  ['BackSuperWideCameraModuleSerialNumString', 'camera_wide', '超廣角鏡頭', '超廣角'],
+  ['BackTeleCameraModuleSerialNumString', 'camera_tele', '長焦鏡頭', '長焦'],
+];
 const CELL = ['', 'SLC', 'MLC', 'TLC', 'QLC'];
 
 // Returns { device, …, rows: vendor cards, details: [{ title, items: [{ k, v, sub? }] }] }.
@@ -159,6 +166,12 @@ export function analyze(files, vendors) {
   const nandGB = num(nand, 'capacity') && Math.round(num(nand, 'capacity') / 1e9);
   const cell = CELL[num(nand, 'default-bits-per-cell')] || null;
   rows.push({ key: 'storage', serial: [cell, nandGB && `${nandGB} GB`].filter(Boolean).join(' · ') || null, ...byName(str1(nand, 'vendor-name'), vendors.storage) });
+
+  // Main cameras get vendor cards too; unmapped prefixes just show the serial.
+  for (const [prop, key, label, short] of MAIN_CAMERAS) {
+    const serial = str1(service, prop);
+    rows.push({ key, label, short, serial, ...byPrefix(serial, vendors.camera) });
+  }
 
   // Overall score: average of ranked parts (高 100 / 中 60 / 低 30); unranked parts don't count.
   const points = rows.map((r) => ({ 高: 100, 中: 60, 低: 30 })[r.rank]).filter(Boolean);
@@ -206,6 +219,9 @@ export function analyze(files, vendors) {
     build,
     score,
     details,
-    rows: rows.map((r) => ({ ...r, label: vendors[r.key].label, short: vendors[r.key].short, note: vendors[r.key].rankNote })),
+    rows: rows.map((r) => {
+      const v = vendors[r.key] ?? vendors.camera;
+      return { label: v.label, short: v.short, note: v.rankNote, sources: v.sources, ...r };
+    }),
   };
 }

@@ -71,6 +71,9 @@ test('real iPhone 18 Pro ioreg dump', { skip: !existsSync(real) }, () => {
   assert.equal(r.ram.serial, 'LPDDR5 · 12 GB');
   assert.equal(r.storage.vendor, 'Kioxia 鎧俠（原 Toshiba）');
   assert.equal(r.storage.serial, 'TLC · 256 GB');
+  assert.equal(r.camera_front.serial, 'DNMHV6010Z000014RE');
+  assert.equal(r.camera_tele.label, '長焦鏡頭');
+  assert.equal(r.camera_wide.vendor, undefined); // no public prefix mapping yet
   const d = Object.fromEntries(analyze(files, vendors).details.flatMap((g) => g.items.map((i) => [i.k, i.v])));
   assert.equal(d['晶片'], 'Apple A20 Pro（T8160）');
   assert.equal(d['最大容量'], '100%');

@@ -158,7 +158,7 @@
   },
   "camera": {
     "label": "相機模組",
-    "rankNote": "目前查不到相機模組序號前綴對應哪家模組廠（LG Innotek、Foxconn、Cowell 等），所以只列序號。知道的話歡迎到 GitHub 補充。",
+    "rankNote": "目前查不到相機模組序號前綴對應哪家模組廠（LG Innotek、Foxconn、Cowell 等），所以只列序號。",
     "sources": [
       "https://forums.macrumors.com/threads/iphone-13-pro-parts-serials-cameras-battery-display.2314093/"
     ],
